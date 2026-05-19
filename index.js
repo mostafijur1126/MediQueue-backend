@@ -26,6 +26,7 @@ async function run() {
 
     const db = client.db("mediqueue");
     const tutorsCollection = db.collection("tutors");
+    const bookingCollection = db.collection("bookings");
 
     app.post("/tutors", async (req, res) => {
       const tutor = req.body;
@@ -57,6 +58,56 @@ async function run() {
         .find({ "user.id": userId })
         .toArray();
       res.send(resust);
+    });
+
+    app.post("/bookings", async (req, res) => {
+      const bookingData = req.body;
+      const tutorId = bookingData.tutorId;
+
+      const tutor = await tutorsCollection.findOne({
+        _id: new ObjectId(tutorId),
+      });
+
+      if (!tutor || Number(tutor.totalSlots) <= 0) {
+        return res.status(400).send({
+          message: "No available slots.",
+        });
+      }
+
+      // const existingBooking = await bookingCollection.findOne({
+      //   tutorId: new ObjectId(tutorId),
+      //   "user.id": bookingData.user.id,
+      // });
+      // if (existingBooking) {
+      //   return res.status(400).send({
+      //     message: "You have already booked this tutor.",
+      //   });
+      // }
+
+      const newBooking = {
+        ...tutor,
+        user: bookingData.user,
+        createdAt: new Date(),
+        status: "booked",
+      };
+      // const newBooking = {
+      //   tutorId: new ObjectId(tutorId),
+      //   userId: userId,
+      //   createdAt: new Date(),
+      //   status: "booked",
+      // };
+
+      const bookingResult = await bookingCollection.insertOne(newBooking);
+
+      await tutorsCollection.updateOne(
+        { _id: new ObjectId(tutorId) },
+        { $inc: { totalSlots: -1 } },
+      );
+      res.send({
+        success: true,
+        message: "Booking Successrul.",
+        bookingResult,
+      });
     });
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
