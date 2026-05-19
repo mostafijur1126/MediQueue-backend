@@ -7,7 +7,7 @@ const port = process.env.PORT || 8000;
 app.use(cors());
 app.use(express.json());
 
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = process.env.MONGODB_URI;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -27,11 +27,37 @@ async function run() {
     const db = client.db("mediqueue");
     const tutorsCollection = db.collection("tutors");
 
+    app.post("/tutors", async (req, res) => {
+      const tutor = req.body;
+      const newTutor = {
+        ...tutor,
+        registrationDate: new Date(),
+      };
+      const result = await tutorsCollection.insertOne(newTutor);
+      res.send(result);
+      // console.log(tutor);
+    });
+
     app.get("/tutors", async (req, res) => {
       const result = await tutorsCollection.find().toArray();
       res.send(result);
     });
 
+    app.get("/tutors/:path", async (req, res) => {
+      const { path } = req.params;
+      const result = await tutorsCollection.findOne({
+        _id: new ObjectId(path),
+      });
+      res.send(result);
+    });
+
+    app.get("/myTutor/:userId", async (req, res) => {
+      const { userId } = req.params;
+      const resust = await tutorsCollection
+        .find({ "user.id": userId })
+        .toArray();
+      res.send(resust);
+    });
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
