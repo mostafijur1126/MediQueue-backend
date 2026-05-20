@@ -94,35 +94,40 @@ async function run() {
         _id: new ObjectId(tutorId),
       });
 
-      // if (!tutor || Number(tutor.totalSlots) <= 0) {
-      //   return res.status(400).send({
-      //     message: "No available slots.",
-      //   });
-      // }
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const sessionDate = new Date(tutor.sessionStartDate);
+      sessionDate.setHours(0, 0, 0, 0);
+      if (today > sessionDate) {
+        return res.status(400).json({
+          success: false,
+          message: "Booking is not availalble yet for this tutor.",
+        });
+      }
 
-      // const existingBooking = await bookingCollection.findOne({
-      //   tutorId: new ObjectId(tutorId),
-      //   "user.id": bookingData.user.id,
-      // });
-      // if (existingBooking) {
-      //   return res.status(400).send({
-      //     message: "You have already booked this tutor.",
-      //   });
-      // }
+      if (!tutor || Number(tutor.totalSlots) <= 0) {
+        return res.status(400).send({
+          message: "No available slots.",
+        });
+      }
+
+      const existingBooking = await bookingCollection.findOne({
+        _id: new ObjectId(tutorId),
+        // email,
+        // "user.id": bookingData.user.id,
+      });
+      // console.log(existingBooking);
+      if (existingBooking) {
+        return res.status(400).send({
+          message: "You have already booked this tutor.",
+        });
+      }
 
       const newBooking = {
         ...tutor,
         user: bookingData,
         status: "booked",
       };
-      console.log(newBooking);
-      // const newBooking = {
-      //   tutorId: new ObjectId(tutorId),
-      //   userId: userId,
-      //   createdAt: new Date(),
-      //   status: "booked",
-      // };
-
       const bookingResult = await bookingCollection.insertOne(newBooking);
 
       await tutorsCollection.updateOne(
@@ -137,7 +142,11 @@ async function run() {
     });
 
     app.get("/booking", async (req, res) => {
-      const result = await bookingCollection.find().toArray();
+      const { email } = req.query;
+      console.log(email);
+      const result = await bookingCollection
+        .find({ "user.email": email })
+        .toArray();
       res.send(result);
     });
 
