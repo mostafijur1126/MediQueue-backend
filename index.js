@@ -94,7 +94,7 @@ async function run() {
         user: bookingData,
         status: "booked",
       };
-      // console.log(newBooking);
+      console.log(newBooking);
       // const newBooking = {
       //   tutorId: new ObjectId(tutorId),
       //   userId: userId,
@@ -119,6 +119,20 @@ async function run() {
       const result = await bookingCollection.find().toArray();
       res.send(result);
     });
+
+    app.patch("/booking/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await bookingCollection.updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: {
+            status: "Cancelled",
+          },
+        },
+      );
+      res.send(result);
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
