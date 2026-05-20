@@ -78,6 +78,14 @@ async function run() {
       // console.log("id", id, "userinfo", updateTutor);
     });
 
+    app.delete("/myTutor/:id", async (req, res) => {
+      const { id } = req.params;
+      const result = await tutorsCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.send(result);
+    });
+
     app.post("/bookings", async (req, res) => {
       const bookingData = req.body;
       const tutorId = bookingData.tutorId;
