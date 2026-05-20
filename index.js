@@ -39,6 +39,11 @@ async function run() {
       // console.log(tutor);
     });
 
+    app.get("/tutorsHome", async (req, res) => {
+      const result = await tutorsCollection.find().limit(6).toArray();
+      res.send(result);
+    });
+
     app.get("/tutors", async (req, res) => {
       const result = await tutorsCollection.find().toArray();
       res.send(result);
@@ -68,11 +73,11 @@ async function run() {
         _id: new ObjectId(tutorId),
       });
 
-      if (!tutor || Number(tutor.totalSlots) <= 0) {
-        return res.status(400).send({
-          message: "No available slots.",
-        });
-      }
+      // if (!tutor || Number(tutor.totalSlots) <= 0) {
+      //   return res.status(400).send({
+      //     message: "No available slots.",
+      //   });
+      // }
 
       // const existingBooking = await bookingCollection.findOne({
       //   tutorId: new ObjectId(tutorId),
@@ -86,10 +91,10 @@ async function run() {
 
       const newBooking = {
         ...tutor,
-        user: bookingData.user,
-        createdAt: new Date(),
+        user: bookingData,
         status: "booked",
       };
+      // console.log(newBooking);
       // const newBooking = {
       //   tutorId: new ObjectId(tutorId),
       //   userId: userId,
@@ -108,6 +113,11 @@ async function run() {
         message: "Booking Successrul.",
         bookingResult,
       });
+    });
+
+    app.get("/booking", async (req, res) => {
+      const result = await bookingCollection.find().toArray();
+      res.send(result);
     });
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
