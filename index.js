@@ -132,6 +132,7 @@ async function run() {
     app.post("/bookings", verifyToken, async (req, res) => {
       const bookingData = req.body;
       const tutorId = bookingData.tutorId;
+      // console.log(bookingData);
 
       const tutor = await tutorsCollection.findOne({
         _id: new ObjectId(tutorId),
@@ -155,7 +156,8 @@ async function run() {
       }
 
       const existingBooking = await bookingCollection.findOne({
-        _id: new ObjectId(tutorId),
+        tutorId: tutorId,
+        "user.email": bookingData.email,
       });
       // console.log(existingBooking);
       if (existingBooking) {
@@ -164,10 +166,27 @@ async function run() {
         });
       }
 
+      // const newBooking = {
+      //   ...tutor,
+      //   user: bookingData,
+      //   status: "booked",
+      // };
       const newBooking = {
-        ...tutor,
-        user: bookingData,
+        tutorId: tutorId,
+        tutorName: tutor.tutorName,
+        subject: tutor.subject,
+        hourlyFee: tutor.hourlyFee,
+        sessionStartDate: tutor.sessionStartDate,
+        photo: tutor.photo,
+
+        user: {
+          name: bookingData.studentName,
+          email: bookingData.email,
+          phone: bookingData.phone,
+        },
+
         status: "booked",
+        createdAt: new Date(),
       };
       const bookingResult = await bookingCollection.insertOne(newBooking);
 
@@ -183,7 +202,7 @@ async function run() {
     });
 
     app.get("/booking", verifyToken, async (req, res) => {
-      const { email } = req.query;
+      const email = req.query.email;
       // console.log(email);
       const result = await bookingCollection
         .find({ "user.email": email })
